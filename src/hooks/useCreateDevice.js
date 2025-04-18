@@ -2,6 +2,7 @@ import { useState } from 'react';
 import axios from 'axios';
 import { apiUrl as API_URL } from '../utils/ApiPath';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import deviceType from '../types/DeviceType';
 
 const useCreateDevice = () => {
   const [loading, setLoading] = useState(false);
@@ -17,6 +18,10 @@ const useCreateDevice = () => {
         "name": deviceName,   
         "type": "",
         "label": "",
+        "deviceProfileId": {
+          "id": deviceType.get(device_type).profileId,
+          "entityType": "DEVICE_PROFILE"
+        },
         "deviceData": {
           "configuration": {
             "type": "DEFAULT"
@@ -29,9 +34,6 @@ const useCreateDevice = () => {
             "pagingTransmissionWindow": 500  // 500 mili-giây
           }
         },
-        "attributes": {
-    "inactivityTimeout": 300
-  },
         "additionalInfo": { 
           "macAddress": macAddress,
           "device_type": device_type

@@ -7,6 +7,7 @@ import { useGetDeviceOfAssets } from "../hooks/useGetDeviceOfAssets";
 import CircleSpin from '../components/CircleSpinner';
 import DeviceItem from "../components/DeviceItem";
 import { useNavigation } from "@react-navigation/native";
+import { getDevicesOfAsset } from "../api/getDeviceOfAssets";
 
 const imageGarden = '../../assets/garden.jpg';
 
@@ -188,7 +189,25 @@ const HomePage = () => {
 };
 
 const DevicesOfSpace = ({ space }) => {
-  const { devices, loading, setRefresh } = useGetDeviceOfAssets(space?.id?.id);
+  const [devices, setDevices] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [refresh, setRefresh] = useState(false);
+  
+  useEffect(() => {
+    async function fetchDevices() {
+      if(!space) return;
+      setLoading(true);
+      try {     
+        const devices = await getDevicesOfAsset(space?.id?.id);
+        setDevices(devices);
+      } catch (error) {
+        console.error("Error fetching devices:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchDevices();
+  }, [space, refresh]);
 
 
   if (loading) {

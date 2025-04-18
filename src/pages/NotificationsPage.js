@@ -45,7 +45,7 @@ export default function NotificationsScreen({ navigation }) {
       const token = await AsyncStorage.getItem('token');
 
       const response = await fetch(
-        `${apiUrl}/api/notifications?pageSize=10&page=${pageNum}&unreadOnly=false`,
+        `${apiUrl}/api/v2/alarms?pageSize=10&page=${pageNum}&sortProperty=createdTime&sortOrder=DESC&statusList=ACTIVE`,
         {
           method: 'GET',
           headers: {
@@ -124,29 +124,11 @@ export default function NotificationsScreen({ navigation }) {
   };
 
   const renderNotificationIcon = (notification) => {
-    const severity = notification.info?.alarmSeverity;
+    const severity = notification.severity;
     const colors = getSeverityColor(severity);
-
-    if (notification.type === "ALARM") {
-      return (
-        <View className={`w-10 h-10 rounded-full items-center justify-center`} style={{ backgroundColor: colors.bg }}>
-          <AlertTriangle size={20} color={colors.icon} />
-        </View>
-      );
-    }
-
-    if (notification.subject.includes("Temperature")) {
-      return (
-        <View className="w-10 h-10 rounded-full bg-red-100 items-center justify-center">
-          <ThermometerHot size={20} color="#ef4444" />
-        </View>
-      );
-    }
-
-    // Default icon
     return (
-      <View className="w-10 h-10 rounded-full bg-blue-100 items-center justify-center">
-        <Bell size={20} color="#3b82f6" />
+      <View className={`w-10 h-10 rounded-full items-center justify-center`} style={{ backgroundColor: colors.bg }}>
+        <AlertTriangle size={20} color={colors.icon} />
       </View>
     );
   };
@@ -177,8 +159,8 @@ export default function NotificationsScreen({ navigation }) {
           <View className="flex-row"> 
             <View className="mr-3">{renderNotificationIcon(item)}</View>
             <View className="flex-1">
-              <Text className="font-bold text-gray-800 text-base mb-1">{item.subject}</Text>
-              <Text className="text-gray-600 mb-2">{item.text}</Text>
+              <Text className="font-bold text-gray-800 text-base mb-1">{item.name}</Text>
+              <Text className="text-gray-600 mb-2">{item.originatorName}</Text>
               <View className="flex-row justify-between items-center">
                 <Text className="text-gray-500 text-xs">{formatTimestamp(item.createdTime)}</Text>
                 {severity && (

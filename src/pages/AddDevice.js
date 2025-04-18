@@ -11,7 +11,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
-  FlatList,
+  FlatList, 
   Modal,
   PermissionsAndroid,
 } from 'react-native';
@@ -36,7 +36,7 @@ const CHARACTERISTIC_UUID = 'beb5483e-36e1-4688-b7f5-ea07361b26a8';
 const deviceTypes = Array.from(deviceType).map(([key, value]) => {
   return {
     id: key,
-    name: value,
+    name: value.name,
     icon: <Cpu size={24} color="#555" />,
   }
 })

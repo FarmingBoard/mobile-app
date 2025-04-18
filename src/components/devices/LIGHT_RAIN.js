@@ -45,7 +45,7 @@ export default function LIGHT_RAIN({ device }) {
             const latestData = data.data;
             console.log(latestData)
             if (latestData.light) {
-              setLightSensor(300 - latestData.light[0][1]);
+              setLightSensor(400 - latestData.light[0][1]);
             }
             if (latestData.rain) {
               setRainSensor(400 - latestData.rain[0][1]);

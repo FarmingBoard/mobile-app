@@ -11,9 +11,9 @@
 #define SERVICE_UUID "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
 #define CHARACTERISTIC_UUID "beb5483e-36e1-4688-b7f5-ea07361b26a8"
 #define RESET_BUTTON_PIN 34
-#define WARN_LED_DO 16 // hoat dong
-#define WARN_LED_VANG 17 // khong ket noi
-#define WARN_LED_XANH 18 // chua cai dat
+#define WARM_LED_DO 16
+#define WARM_LED_VANG 17
+#define WARM_LED_XANH 18
 
 #define DHTPIN 4
 #define DHTTYPE DHT11
@@ -28,7 +28,7 @@ Không kết nối được WiFi: "wifi_error"
 Không kết nối được MQTT: "mqtt_error"
 Kết nối WiFi và MQTT thành công: "connected"
 */
-String statusDevice = "";
+char *statusDevice = "";
 
 // Khai báo các biến toàn cục
 bool resetButtonPressed = false;        // Biến lưu trạng thái nút reset
@@ -47,13 +47,11 @@ int mqttPort = 1883;
 
 bool wifiConnected = false;
 bool mqttConnected = false;
-bool isChangedData = false;
 
 BLECharacteristic *pCharacteristic;
 BLEServer *pServer;
 String rxValue = "";
 
-void setWarnLed(const int type);
 void setupBLE();
 bool connectToWiFi(const char *ssid, const char *password);
 bool connectToMQTT();
@@ -101,38 +99,21 @@ void setup()
     dht.begin();
     EEPROM.begin(EEPROM_SIZE);
     loadCredentialsFromEEPROM();
-    setWarnLed(0);
     if (statusDevice == "no_data")
     {
-        setWarnLed(2);
+        digitalWrite(WARN_LED_DO, LOW);
+        digitalWrite(WARN_LED_VANG, HIGH);
+        digitalWrite(WARN_LED_XANH, LOW);
         Serial.println("No data found in EEPROM");
         setupBLE();
         while (statusDevice != "connected")
         {
-            if(isChangedData){
-              connectToWiFi(wifiSSID, wifiPass);
-              if (wifiConnected)
-              {
-                  connectToMQTT();
-              }
-              if (mqttConnected)
-              {
-                  String message = "SUCCESS";
-                  pCharacteristic->setValue(message.c_str());
-                  pCharacteristic->notify();
-                  Serial.println("BLE notification sent: " + message);
-                  saveCredentialsToEEPROM();
-                  statusDevice = "connected";
-                  isChangedData = false;
-              }
-            }
             delay(2000);
         }
-        BLEDevice::deinit();  // Tắt BLE stack
-        esp_bt_controller_disable();  // Tắt Bluetooth controller
-        setWarnLed(1);
+        digitalWrite(WARN_LED_DO, LOW);
+        digitalWrite(WARN_LED_VANG, LOW);
+        digitalWrite(WARN_LED_XANH, HIGH);
     }
-    connectToWiFi(wifiSSID, wifiPass);
 }
 
 void loop()
@@ -142,17 +123,20 @@ void loop()
     {
         if (statusDevice != "no_connected")
         {
-            if(!mqttConnected){
-              setWarnLed(3);
-            }
+            digitalWrite(WARN_LED_DO, HIGH);
+            digitalWrite(WARN_LED_VANG, LOW);
+            digitalWrite(WARN_LED_XANH, LOW);
         }
-        return;
+        if (!connectToWiFi(wifiSSID, wifiPass))
+            return;
     }
     if (!mqttConnected)
     {
         if (statusDevice != "no_connected")
         {
-            setWarnLed(3);
+            digitalWrite(WARN_LED_DO, HIGH);
+            digitalWrite(WARN_LED_VANG, LOW);
+            digitalWrite(WARN_LED_XANH, LOW);
         }
         connectToMQTT();
         if (!mqttConnected)
@@ -161,25 +145,8 @@ void loop()
     if (WiFi.status() == WL_CONNECTED && mqttConnected == true)
     {
         sendDHT11Data();
-        client.loop();
         delay(1000);
     }
-}
-
-void setWarnLed(const int type){
-  bool red = false, green = false, blue = false;
-  if(type == 1) {
-    red = true;
-  }
-  if(type == 2) {
-    green = true;
-  }
-  if(type == 3) {
-    blue = true;
-  }
-  digitalWrite(WARN_LED_DO, red);
-  digitalWrite(WARN_LED_VANG, green);
-  digitalWrite(WARN_LED_XANH, blue);
 }
 
 bool connectToWiFi(const char *ssid, const char *password)
@@ -200,7 +167,6 @@ bool connectToWiFi(const char *ssid, const char *password)
         }
     }
     Serial.println("\nWiFi connected");
-    statusDevice = "wifi_connected";
     wifiConnected = true;
     return true;
 }
@@ -208,23 +174,19 @@ bool connectToWiFi(const char *ssid, const char *password)
 bool connectToMQTT()
 {
     client.setServer(mqttServer, mqttPort);
-    client.setCallback(callback);
     Serial.print("Connecting to MQTT...");
     if (client.connect("ESP32Client", mqttUser, mqttPass))
     {
         Serial.println("MQTT connected");
         mqttConnected = true;
-       // Đăng ký nhận thông tin Shared Attributes khi có thay đổi
-        client.subscribe("v1/devices/me/attributes");
-        // Gửi yêu cầu lấy giá trị Shared Attributes
-        String request = "{\"sharedKeys\":\"lightState\"}";
-        client.publish("v1/devices/me/attributes/request/1", request.c_str());
+        client.subscribe("v1/devices/me/attribute");
         if (statusDevice == "wifi_connected")
         {
             statusDevice = "connected";
-            setWarnLed(1);
+            digitalWrite(WARN_LED_DO, LOW);
+            digitalWrite(WARN_LED_VANG, LOW);
+            digitalWrite(WARN_LED_XANH, HIGH);
         }
-        mqttConnected = true;
         return true;
     }
     else
@@ -291,7 +253,20 @@ void onBLEReceive(String jsonData)
     Serial.printf("onBLEReceive.LOG -> MQTTUSER: %s\n", mqttUser);
     Serial.printf("onBLEReceive.LOG -> MQTTSERVER: %s\n", mqttServer);
     Serial.printf("onBLERecevie.LOG -> MQTTPORT: $d\n", mqttPort);
-    isChangedData = true;
+    connectToWiFi(wifiSSID, wifiPass);
+    if (wifiConnected)
+    {
+        connectToMQTT();
+    }
+    if (mqttConnected)
+    {
+        String message = "SUCCESS";
+        pCharacteristic->setValue(message.c_str());
+        pCharacteristic->notify();
+        Serial.println("BLE notification sent: " + message);
+    }
+    saveCredentialsToEEPROM();
+    statusDevice = "connected";
 }
 
 void saveCredentialsToEEPROM()
@@ -340,53 +315,31 @@ void loadCredentialsFromEEPROM()
     }
 }
 
-// void handleResetButton()
-// {
-//     if (digitalRead(RESET_BUTTON_PIN) == LOW)
-//     {
-//         if (!resetButtonPressed)
-//         {
-//             resetButtonPressTime = millis();
-//             resetButtonPressed = true;
-//         }
-//         else if (millis() - resetButtonPressTime > 3000)
-//         {
-//             DynamicJsonDocument doc(256);
-//             doc["status_device"] = "REMOVE_DATA";
-//             String jsonMessage;
-//             serializeJson(doc, jsonMessage);
-//             client.publish("v1/devices/me/attributes", jsonMessage.c_str());
-//             Serial.println("Reset button held for 10 seconds. Resetting device...");
-//             resetDevice();
-//         }
-//     }
-//     else
-//     {
-//         resetButtonPressed = false;
-//     }
-// }
-
-#define DEBOUNCE_DELAY 50  // 50ms để lọc nhiễu
-
-void handleResetButton() {
-    static unsigned long lastDebounceTime = 0;
-    int buttonState = digitalRead(RESET_BUTTON_PIN);
-
-    if (buttonState == HIGH) {
-        if (!resetButtonPressed && millis() - lastDebounceTime > DEBOUNCE_DELAY) {
+void handleResetButton()
+{
+    if (digitalRead(RESET_BUTTON_PIN) == LOW)
+    {
+        if (!resetButtonPressed)
+        {
             resetButtonPressTime = millis();
             resetButtonPressed = true;
-            lastDebounceTime = millis();
-        } else if (resetButtonPressed && millis() - resetButtonPressTime > 3000) {
+        }
+        else if (millis() - resetButtonPressTime > 3000)
+        {
+            DynamicJsonDocument doc(256);
+            doc["status_device"] = "REMOVE_DATA";
+            String jsonMessage;
+            serializeJson(doc, jsonMessage);
+            client.publish("v1/devices/me/attributes", jsonMessage.c_str());
             Serial.println("Reset button held for 10 seconds. Resetting device...");
             resetDevice();
-            resetButtonPressed = false;
         }
-    } else {
+    }
+    else
+    {
         resetButtonPressed = false;
     }
 }
-
 
 void resetDevice()
 {
@@ -404,28 +357,8 @@ void callback(char *topic, byte *payload, unsigned int length)
     String message;
     for (unsigned int i = 0; i < length; i++)
     {
-        message += (char)payload[i];  
+        message += (char)payload[i];
     }
     Serial.print("Message received: ");
     Serial.println(message);
-    /*
-    {
-        "lightState": true
-    }
-    */
-   
-    DynamicJsonDocument doc(1024);
-    DeserializationError error = deserializeJson(doc, message);
-    if (!error)
-    {
-        bool lightState = doc["lightState"];
-        if (lightState)
-        {
-            digitalWrite(LED_DO, HIGH);
-        }
-        else
-        {
-            digitalWrite(LED_DO, LOW);
-        }
-    }
 }

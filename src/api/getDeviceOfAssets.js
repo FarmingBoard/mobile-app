@@ -2,9 +2,10 @@ import axios from 'axios';
 import {apiUrl} from '../utils/ApiPath';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export const useGetDevicesOfAsset =  async (assetId) => {
+export const getDevicesOfAsset =  async (assetId) => {
 
     const getDeviceCredentials = async (deviceId) => {
+      if(deviceId === null || deviceId === undefined) return [];
         try {
           const token = await AsyncStorage.getItem('token');
           const response = await axios.get(`${apiUrl}/api/device/info/${deviceId}`, {
@@ -32,11 +33,12 @@ export const useGetDevicesOfAsset =  async (assetId) => {
     });
 
     const devices = await Promise.all(response.data.map(async (device) => {
-        const rp = await getDeviceCredentials(device.id);
+        const rp = await getDeviceCredentials(device.to.id);
         return {
             id: rp.id.id,
             name: rp.name,
-            active: rp.active
+            active: rp.active,
+            device_type: rp.additionalInfo.device_type
         }   
     }));
 

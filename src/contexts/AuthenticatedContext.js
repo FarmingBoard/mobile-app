@@ -2,6 +2,7 @@ import React, { createContext, useState, useContext, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Alert } from 'react-native';
 import { apiUrl } from '../utils/ApiPath';
+import getTokenWithRefreshToken from '../api/getTokenWithRefreshToken';
 
 // Tạo context
 const AuthenticatedContext = createContext();
@@ -39,15 +40,24 @@ export const AuthenticatedProvider = ({ children }) => {
             if (token) {
                 console.log('Token hợp lệ:', token);
                 if (!await isTokenValid(token)) {
-                    console.log('Token không hợp lệ hoặc đã hết hạn.');
-                    Alert.alert('Thông báo', 'Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại.');
-                    setIsAuthenticated(false);
+                    if(getTokenWithRefreshToken) {
+                        const isValid = await getTokenWithRefreshToken({ token });
+                        if (isValid) {
+                            setIsAuthenticated(true);
+                        } else {
+                            console.log('Token không hợp lệ hoặc đã hết hạn.');
+                            Alert.alert('Thông báo', 'Vui lòng đăng nhập lại.');
+                            setIsAuthenticated(false);
+                        }
+                    }
                 } else {
                     setIsAuthenticated(true);
                 }
             } else {
+                await AsyncStorage.removeItem('token'); // Xóa token không hợp lệ
+                await AsyncStorage.removeItem('refreshToken'); // Xóa refresh token không hợp lệ
                 console.log('Token không hợp lệ hoặc đã hết hạn.');
-                Alert.alert('Thông báo', 'Phiên đăng nhập đã hết hạn, vui lòng đăng nhập lại.');
+                Alert.alert('Thông báo', 'Vui lòng đăng nhập lại.');
                 setIsAuthenticated(false);
             }
             setLoading(false);

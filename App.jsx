@@ -16,11 +16,34 @@ import { View } from 'react-native';
 import { ActivityIndicator } from 'react-native';
 import NotificationsPage from './src/pages/NotificationsPage';
 import AddDeviceScreen from './src/pages/AddDevice';
-import { Leaf, Settings, BarChart, User, Cpu, House } from 'lucide-react-native';
+import { Leaf, Settings, BarChart, User, Cpu, House, Subscript, Superscript, Code } from 'lucide-react-native';
 import DevicePage from './src/pages/DevicePage';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import HomePage from './src/pages/HomePage';
 import AddAsset from './src/pages/AddAsset';
+import auth from '@react-native-firebase/auth';
+import firebase from '@react-native-firebase/app';
+import { getFCMToken, onNotificationReceived } from './src/services/firebaseService';
+import DeviceSettings from './src/pages/DeviceSettings';
+import ScriptPage from './src/pages/scripts/ScriptPage';
+import SceneCreationScreen from './src/pages/scripts/CreateScript';
+import ScheduleTimeScreen from './src/pages/scripts/ScheduleTime';
+import CreateSceneScreen from './src/pages/scripts/CreateAddjustScript';
+
+// // Your secondary Firebase project credentials...
+// const credentials = {
+//   clientId: '1:302874682954:android:30bfc586b2242f3de1e8b3',
+//   appId: '1:302874682954:android:30bfc586b2242f3de1e8b3',
+//   apiKey: 'AIzaSyCaoieMkzft47idWg27uNzZvgzdkzOjyKM',
+//   databaseURL: '',
+//   storageBucket: 'smartfarm-fa60e.firebasestorage.app',
+//   messagingSenderId: '302874682954',
+//   projectId: 'smartfarm-fa60e',
+// };
+
+// const config = {
+//   name: 'SECONDARY_APP',
+// };
 
 enableScreens();
 
@@ -55,6 +78,20 @@ const GardenScreen = () => (
         component={AddDeviceScreen}
         options={{
           title: 'Thêm thiết bị mới',
+          headerStyle: {
+            backgroundColor: '#fff',
+          },
+          headerTintColor: '#333',
+          headerTitleStyle: {
+            fontWeight: 'bold',
+          },
+        }}
+      />
+      <Stack.Screen 
+        name="DeviceSettings" 
+        component={DeviceSettings}
+        options={{
+          title: 'Cài đặt thiết bị',
           headerStyle: {
             backgroundColor: '#fff',
           },
@@ -99,11 +136,54 @@ const SmartScreen = () => (
     <NotificationsPage />
 );
 
+
 const ProfileScreen = () => (
   <ScrollView className="flex-1 bg-white" contentContainerStyle={styles.scrollContent}>
     <ProfilePage />
   </ScrollView>
 );
+
+const ScriptScreen = () => {
+  return (
+    <Stack.Navigator>
+      <Stack.Screen 
+        name="Kịch bản" 
+        component={ScriptPage}
+        options={{
+          headerShown: false
+        }}
+      />
+      <Stack.Screen 
+        name="Tạo kịch bản" 
+        component={SceneCreationScreen}
+        options={{
+          title: 'Tạo kịch bản mới',
+          headerStyle: {
+            backgroundColor: '#fff',
+          },
+          headerTintColor: '#333',
+          headerTitleStyle: {
+            fontWeight: 'bold',
+          },
+        }}
+      />
+      <Stack.Screen
+        name="Lên lịch"
+        component={ScheduleTimeScreen}
+        options={{
+          headerShown: false
+        }}
+      />
+      <Stack.Screen
+        name="Điều kiện"
+        component={CreateSceneScreen}
+        options={{
+          headerShown: false
+        }}
+      />
+    </Stack.Navigator>
+  )
+}
 
 function MainApp() {
   const { isAuthenticated, login, logout, loading } = useAuthenticated();
@@ -136,6 +216,8 @@ function MainApp() {
                   return <BarChart size={24} color={focused ? '#2E7D32' : '#777'} />;
                 } else if (route.name === 'Profile') {
                   return <User size={24} color={focused ? '#2E7D32' : '#777'} />;
+                } else if (route.name === 'Kịch bản') {
+                  return <Code size={24} color={focused ? '#2E7D32' : '#777'} />;
                 }
 
                 // return <Ionicons name="house" color="#ff0000" size={20} />
@@ -158,6 +240,7 @@ function MainApp() {
           >
             <Tab.Screen name="Garden" component={GardenScreen} options={{ tabBarLabel: 'Vườn', headerShown: false  }} />
             <Tab.Screen name="Thêm thiết bị" component={ScenarioScreen} options={{ tabBarLabel: 'Thiết bị', headerShown: false  }} />
+            <Tab.Screen name="Kịch bản" component={ScriptScreen} options={{ tabBarLabel: 'Kịch bản', headerShown: false  }} />
             <Tab.Screen name="Thông báo" component={SmartScreen} options={{ tabBarLabel: 'Thông báo', headerShown: false  }} />
             <Tab.Screen name="Profile" component={ProfileScreen} options={{ tabBarLabel: 'Tài khoản', headerShown: false  }} />
           </Tab.Navigator>
@@ -170,6 +253,14 @@ function MainApp() {
 }
 
 export default function App() {
+  useEffect(() => {
+    async function getTokenZ(){
+      console.log("Get token", await getFCMToken());
+      onNotificationReceived();
+    }
+    getTokenZ();
+  })
+
   return (
     <AuthenticatedProvider>
       <MainApp />

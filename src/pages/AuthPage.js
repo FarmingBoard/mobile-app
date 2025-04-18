@@ -4,6 +4,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { apiUrl } from '../utils/ApiPath';
 import { useAuthenticated } from '../contexts/AuthenticatedContext';
 import { ActivityIndicator } from 'react-native';
+import { set } from 'date-fns';
+import { getFCMToken } from '../services/firebaseService';
 
 export default function LoginRegister() {
     const { login } = useAuthenticated();
@@ -13,10 +15,27 @@ export default function LoginRegister() {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
+    /*
+    {
+        "email": "a@gmail.com",
+        "password": "123456",
+        "firstName": "Hoang",
+        "lastName": "Nguyen",
+        "phoneNumber": "0878888",
+        "address": "ha noi",
+        "fmcToken": "sàhksckdshjghj"
+    }
+    */
+    const [phoneNumber, setPhoneNumber] = useState(''); 
+    const [firstName, setFirstName] = useState('');
+    const [lastName, setLastName] = useState('');
+    const [address, setAddress] = useState('');
+    const [fmcToken, setFmcToken] = useState('');
+    const [email, setEmail] = useState('');
     const [error, setError] = useState('Vui lòng nhập thông tin');
 
     const handleBack = () => setView('main');
-    const handleAuth = () => {
+    const handleAuth = async () => {
         setLoading(true);
         console.log('API: ', apiUrl);
         if (view === 'login') {
@@ -39,6 +58,7 @@ export default function LoginRegister() {
                     setLoading(false);
                     if (data.token) {
                         await AsyncStorage.setItem('token', data.token);
+                        await AsyncStorage.setItem('refreshToken', data.refreshToken);
                         login(data.token);
                     } else {
                         setError('Tên đăng nhập hoặc mật khẩu không đúng.');
@@ -50,7 +70,43 @@ export default function LoginRegister() {
                     console.log(err);
                 });
         } else {
-            console.log('Register');
+            console.log('Register:', 'Username:', username, 'Password:', password);
+            const fmcToken = await getFCMToken();
+            fetch(apiUrl + '/api/noauth/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    username: username.trim(),
+                    password: password.trim(),
+                    firstName: firstName.trim(),
+                    lastName: lastName.trim(),
+                    phoneNumber: phoneNumber.trim(),
+                    address: address.trim(),
+                    email: email.trim(),
+                    fmcToken: fmcToken,
+                })
+            })
+                .then(res => {
+                        return res.json();
+                })
+                .then(async data => {
+                    console.log(data);
+                    setLoading(false);
+                    if (data.token) {
+                        await AsyncStorage.setItem('token', data.token);
+                        await AsyncStorage.setItem('refreshToken', data.refreshToken);
+                        login(data.token);
+                    } else {
+                        setError('Đăng ký không thành công.');
+                    }
+                })
+                .catch(err => {
+                    setLoading(false);
+                    setError('Đã xảy ra lỗi, vui lòng thử lại.');
+                    console.log(err);
+                });
         }
     };
 
@@ -83,8 +139,8 @@ export default function LoginRegister() {
 
             {(view === 'login' || view === 'register') && (
                 <View style={styles.authView}>
-                    <TouchableOpacity onPress={handleBack} style={styles.backButton}>
-                        <Text>Quay lại</Text>
+                    <TouchableOpacity className='text-black' onPress={handleBack} style={styles.backButton}>
+                        <Text className='text-black'>Quay lại</Text>
                     </TouchableOpacity>
                     <Text style={styles.title}>{view === 'login' ? 'Đăng nhập' : 'Đăng ký'}</Text>
                     <View style={styles.inputContainer}>
@@ -112,10 +168,44 @@ export default function LoginRegister() {
                                 />
                             </>
                         ) : (
-                            <TextInput
-                                placeholder="Số điện thoại/Email"
-                                style={styles.input}
-                            />
+                            <>
+                                <TextInput
+                                    value={firstName}
+                                    onChangeText={setFirstName}
+                                    placeholder="Họ"
+                                    style={styles.input}
+                                />
+                                <TextInput
+                                    value={lastName}
+                                    onChangeText={setLastName}
+                                    placeholder="Tên"
+                                    style={styles.input}
+                                />
+                                <TextInput
+                                    value={phoneNumber}
+                                    onChangeText={setPhoneNumber}
+                                    placeholder="Số điện thoại"
+                                    style={styles.input}
+                                />
+                                <TextInput
+                                    value={address}
+                                    onChangeText={setAddress}
+                                    placeholder="Địa chỉ"
+                                    style={styles.input}
+                                />
+                                <TextInput
+                                    value={email}
+                                    onChangeText={setEmail}
+                                    placeholder="Số điện thoại/Email"
+                                    style={styles.input}
+                                />
+                                <TextInput
+                                    placeholder="Mật khẩu"
+                                    value={password}
+                                    onChangeText={setPassword}
+                                    style={styles.input}
+                                />
+                            </>
                         )}
                         <View style={styles.checkboxContainer}>
                             <TouchableOpacity
@@ -138,7 +228,9 @@ export default function LoginRegister() {
                             {loading ? (
                                 <ActivityIndicator size="small" color="#FFFFFF" />
                             ) : (
-                                <Text style={styles.authButtonText}>Đăng nhập</Text>
+                                <Text style={styles.authButtonText}>{
+                                    view === 'login' ? 'Đăng nhập' : 'Đăng ký'
+                                }</Text>
                             )}
                         </TouchableOpacity>
                         {view === 'login' && (
@@ -213,12 +305,14 @@ const styles = StyleSheet.create({
     },
     backButton: {
         alignSelf: 'flex-start',
+        color: 'black',
         marginBottom: 24,
     },
     title: {
         fontSize: 24,
         fontWeight: 'bold',
         marginBottom: 24,
+        color: 'black',
     },
     inputContainer: {
         gap: 16,
