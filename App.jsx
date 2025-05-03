@@ -42,6 +42,8 @@ import DeviceParameterScreen from './src/pages/scripts/deviceTrigger/DeviceParam
 import NotificationAction from './src/pages/scripts/actionScript/NotificationAction';
 import DeviceToggleAction from './src/pages/scripts/actionScript/DeviceToggleAction';
 import ActionList from './src/pages/scripts/actionScript/ActionList';
+import DeviceSelectScreen from './src/pages/scripts/actionScript/DeviceSelectScreen';
+import DevicePinToggleScreen from './src/pages/scripts/actionScript/DevicePinToggleScreen';
 
 // // Your secondary Firebase project credentials...
 // const credentials = {
@@ -274,7 +276,14 @@ const ScriptScreen = () => {
       />
       <Stack.Screen
         name="DeviceToggleAction"
-        component={DeviceToggleAction}
+        component={DeviceSelectScreen}
+        options={{
+          headerShown: false
+        }}
+      />
+      <Stack.Screen
+        name="DevicePinToggleScreen"
+        component={DevicePinToggleScreen}
         options={{
           headerShown: false
         }}

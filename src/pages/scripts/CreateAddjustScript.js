@@ -11,8 +11,13 @@ import {
   PanResponder,
   Alert,
 } from "react-native"
-import { ChevronRight, Plus, Clock, Sun, Thermometer, Trash2, WindIcon, Cloud } from "lucide-react-native"
+import { ChevronRight, Plus, Clock, Sun, Thermometer, Trash2, WindIcon, Cloud, Cpu, Bell } from "lucide-react-native"
 import { useNavigation } from "@react-navigation/native"
+import AsyncStorage from "@react-native-async-storage/async-storage"
+import useCreateAsset from "../../hooks/useCreateAsset"
+import { TextInput } from "react-native"
+import axios from "axios"
+import { apiUrl} from "../../utils/ApiPath"
 
 const SwipeableItem = ({ children, onDelete }) => {
   const pan = new Animated.ValueXY()
@@ -81,8 +86,11 @@ const SwipeableItem = ({ children, onDelete }) => {
 
 const CreateSceneScreen = () => {
   const navigation = useNavigation()
-  const { triggers, actions, setTriggers, setActions } = useScript()
+  const { triggers, actions, setTriggers, setActions, lat, lon, setLat, setLon } = useScript()
   const [conditionType, setConditionType] = useState("any") // "any" or "all"
+
+  const {createAsset, loading, error} = useCreateAsset();
+  const [assetName, setAssetName] = useState('');
 
   // Helper function to format days
   const formatDays = (days) => {
@@ -159,13 +167,55 @@ const CreateSceneScreen = () => {
     )
   }
 
+  const saveScript = async () => {
+      try {
+
+        const {getCurrentLocation} = require("../../utils/getLocation");
+        const pos = await getCurrentLocation();
+        console.log(pos);
+        if(pos && pos.latitude && pos.longitude) {
+          setLat(pos.latitude);
+          setLon(pos.longitude);
+
+          console.log(assetName);
+          const asset = await createAsset(assetName, "Cảnh thông minh");
+          console.log(asset);
+        
+          const token = await AsyncStorage.getItem('token');
+          const res = await axios.post(`${apiUrl}/api/plugins/telemetry/ASSET/${asset.id.id}/SERVER_SCOPE`, {
+            triggers,
+            actions,
+            lat,
+            lon,
+            active: true
+          }, {
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Authorization': `Bearer ${token}`
+            }
+          });
+
+          Alert.alert('Thành công', 'Đã lấy vị trí và lưu kịch bản!');
+        } else {
+          Alert.alert('Lỗi', 'Không lấy được vị trí. Vui lòng thử lại!');
+        }
+      } catch(err) {
+        console.log(err);
+        Alert.alert('Lỗi', 'Không lấy được vị trí. Vui lòng kiểm tra quyền truy cập vị trí!');
+      }
+  }
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#f5f6fa" }}>
       <StatusBar barStyle="dark-content" backgroundColor="#f5f6fa" />
 
       {/* Header */}
       <View style={{ paddingHorizontal: 16, paddingTop: 16, paddingBottom: 8 }}>
-        <TouchableOpacity onPress={() => navigation.navigate("Kịch bản")}>
+        <TouchableOpacity onPress={() =>  {
+          setTriggers([]);
+          setActions([]);
+          navigation.navigate("Kịch bản")
+        }}>
           <Text style={{ color: "#666", fontSize: 16 }}>Hủy bỏ</Text>
         </TouchableOpacity>
         <Text
@@ -179,6 +229,22 @@ const CreateSceneScreen = () => {
         >
           Tạo cảnh
         </Text>
+      </View>
+
+      <View style={{ marginHorizontal: 16, marginBottom: 24 }}>
+        <TextInput
+          style={{
+            height: 40,
+            borderColor: "#ccc",
+            borderWidth: 1,
+            borderRadius: 8,
+            paddingHorizontal: 12,
+            marginBottom: 16,
+          }}
+          placeholder="Tên cảnh"
+          value={assetName}
+          onChangeText={setAssetName}
+        />
       </View>
 
       <ScrollView style={{ flex: 1 }}>
@@ -345,7 +411,7 @@ const CreateSceneScreen = () => {
                             {condition.key === "weather" && `Thời tiết: ${weatherOptions[condition.value]}`}
                             {condition.key === "sun" && `Thời điểm: ${condition.value}`}
                           </Text>
-                          <Text style={{ fontSize: 13, color: "#999", marginTop: 2 }}>Thạch Hà</Text>
+                          <Text style={{ fontSize: 13, color: "#999", marginTop: 2 }}>Vị trí</Text>
                         </View>
                         <ChevronRight size={20} color="#CCCCCC" />
                       </TouchableOpacity>
@@ -492,7 +558,76 @@ const CreateSceneScreen = () => {
             </TouchableOpacity>
           </View>
 
+          {actions &&
+            actions.map((action, index) => {
+              if(action.CMD === "SET_OUTPUT") {
+                return action.params.map((param, paramIndex) => (
+                    <TouchableOpacity
+                    key={index + " " +paramIndex}
+                    style={{
+                      backgroundColor: "white",
+                      padding: 16,
+                      borderRadius: 12,
+                      marginBottom: 8,
+                      shadowColor: "#000",
+                      shadowOffset: { width: 0, height: 1 },
+                      shadowOpacity: 0.1,
+                      shadowRadius: 2,
+                      elevation: 1,
+                      borderWidth: 1,
+                      borderColor: "#e0e0e0",
+                      borderStyle: "dashed",
+                    }}
+                    className="flex-row justify-center items-center"
+                    onPress={() => navigation.navigate("ActionDetail")}
+                  >
+                    <Cpu size={24} color="#4A87F5" />
+                    <View className="ml-3 flex-1">
+                    <Text style={{ fontSize: 16, color: "#333" }}>Thiết bị {param.deviceName}</Text>
+                      <Text style={{ fontSize: 13, color: "#999", marginTop: 2 }}>
+                        Kênh {param.pin} {param.value ? "Bật" : "Tắt"}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                ));
+              }
+              else if(action.CMD === "PUSH_NOTIFY") {
+                return (
+                  <TouchableOpacity
+                    key={index}
+                    style={{
+                      backgroundColor: "white",
+                      padding: 16,
+                      borderRadius: 12,
+                      alignItems: "center",
+                      marginBottom: 8,
+                      shadowColor: "#000",
+                      shadowOffset: { width: 0, height: 1 },
+                      shadowOpacity: 0.1,
+                      shadowRadius: 2,
+                      elevation: 1,
+                      borderWidth: 1,
+                      borderColor: "#e0e0e0",
+                      borderStyle: "dashed",
+                    }}
+                    className="flex-row justify-center items-center"
+                    onPress={() => navigation.navigate("ActionDetail")}
+                  >
+                    <Bell size={24} color="#4A87F5" />
+                    <View className="ml-3 flex-1">
+                    <Text style={{ fontSize: 16, color: "#333" }}>Thông báo</Text>
+                      <Text style={{ fontSize: 13, color: "#999", marginTop: 2 }}>
+                        {action.params[0].title}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                )
+              }
+            })
+          }
+
           {/* Action Placeholder */}
+          { !actions &&
           <TouchableOpacity
             style={{
               backgroundColor: "white",
@@ -512,6 +647,7 @@ const CreateSceneScreen = () => {
           >
             <Text style={{ fontSize: 16, color: "#999" }}>Thêm hành động thực thi</Text>
           </TouchableOpacity>
+          }
         </View>
 
         {/* Display Settings */}
@@ -540,20 +676,21 @@ const CreateSceneScreen = () => {
       {/* Save Button */}
       <View style={{ padding: 16, backgroundColor: "#f5f6fa" }}>
         <TouchableOpacity
-          style={{
-            backgroundColor: "#4CD964",
-            paddingVertical: 14,
-            borderRadius: 8,
-            alignItems: "center",
-            shadowColor: "#4CD964",
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.2,
-            shadowRadius: 4,
-            elevation: 3,
-          }}
-        >
-          <Text style={{ color: "white", fontWeight: "600", fontSize: 16 }}>Lưu</Text>
-        </TouchableOpacity>
+           style={{
+             backgroundColor: "#4CD964",
+             paddingVertical: 14,
+             borderRadius: 8,
+             alignItems: "center",
+             shadowColor: "#4CD964",
+             shadowOffset: { width: 0, height: 2 },
+             shadowOpacity: 0.2,
+             shadowRadius: 4,
+             elevation: 3,
+           }}
+           onPress={async () => saveScript()}
+         >
+           <Text style={{ color: "white", fontWeight: "600", fontSize: 16 }}>Lưu</Text>
+         </TouchableOpacity>
       </View>
     </SafeAreaView>
   )

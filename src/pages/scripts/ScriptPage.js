@@ -3,6 +3,9 @@ import { View, Text, TouchableOpacity, SafeAreaView, StatusBar, FlatList, Switch
 import { Link2, Plus, ChevronRight, Menu } from "lucide-react-native"
 import { useNavigation } from "@react-navigation/native"
 import useGetAssets from "../../hooks/useGetAssets"
+import AsyncStorage from "@react-native-async-storage/async-storage"
+import { apiUrl } from "../../utils/ApiPath"
+import axios from "axios"
 
 const AutomationScreen = () => {
   const navigation = useNavigation()
@@ -211,7 +214,17 @@ const AutomationScreen = () => {
                         value={true}
                         trackColor={{ false: "#D1D1D6", true: "#4CD964" }}
                         thumbColor={"#FFFFFF"}
-                        onValueChange={() => {}}
+                        onValueChange={() => {
+                          const token = AsyncStorage.getItem('token');
+                          const res = axios.post(`${apiUrl}/api/plugins/telemetry/ASSET/${item.id.id}/SERVER_SCOPE`, {
+                            active: false
+                          }, {
+                            headers: {
+                              'Content-Type': 'application/json',
+                              'X-Authorization': `Bearer ${token}`
+                            }
+                          })
+                        }}
                       />
                     </View>
                   </TouchableOpacity>

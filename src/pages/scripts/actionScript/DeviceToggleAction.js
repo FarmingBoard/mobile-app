@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, SafeAreaView, StatusBar, FlatList, TextInput } from 'react-native';
 import { ArrowLeft, Power, ChevronRight, Cpu } from 'lucide-react-native';
-import { useNavigation } from '@react-navigation/native';
 import { useScript } from '../../../contexts/ScriptContext';
 import { useGetDevices } from '../../../hooks/useGetDevices';
 import CircleSpinner from '../../../components/CircleSpinner';
+import { useNavigation } from '@react-navigation/native';
+
 
 const DeviceToggleAction = () => {
   const navigation = useNavigation();
@@ -44,19 +45,73 @@ const DeviceToggleAction = () => {
 
   // Handle save action
   const handleSubmit = () => {
-    const deviceAction = {
-      type: 'device_toggle',
-      deviceId: selectedDevice.id.id,
-      deviceName: selectedDevice.name,
-      ...pinStates
-    };
+    /*
+    "actions": [
+    {
+      "CMD": "PUSH_NOTIFY",
+      "params": [
+        {
+          "title": "Test"
+        }
+      ]
+    },
+    {
+      "CMD": "SET_OUTPUT",
+      "params": [
+        {
+          "deviceId": "f7725ee0-10b8-11f0-a6a5-31643b1c7793",
+          "pin": 1,
+          "value": 1
+        },
+        {
+          "deviceId": "f7725ee0-10b8-11f0-a6a5-31643b1c7793",
+          "pin": 2,
+          "value": 1
+        }
+      ]
+    }
+  ]
+    */
+   if(!selectedDevice) {
+    return;
+   }
+    let params = [];
+    if (pinStates.pin1 !== null) {
+      params.push({
+        "deviceId": selectedDevice.id.id,
+        "pin": 1,
+        "value": pinStates.pin1
+      });
+    }
+    if (pinStates.pin2 !== null) {
+      params.push({
+        "deviceId": selectedDevice.id.id,
+        "pin": 2,
+        "value": pinStates.pin2
+      });
+    }
+    if (pinStates.pin3 !== null) {
+      params.push({
+        "deviceId": selectedDevice.id.id,
+        "pin": 3,
+        "value": pinStates.pin3
+      });
+    }
     
     setActions(prev => {
-      if (!prev) return [deviceAction];
-      return [...prev, deviceAction];
+      if(prev == null) {
+        prev = [];
+      }
+      const index = prev.findIndex(action => action.CMD === "SET_OUTPUT");
+      if(index === -1) {
+        prev.push({CMD: "SET_OUTPUT", params: params});
+      } else {
+        prev[index].params.push(...params);
+      }
+      return prev;
     });
     
-    navigation.navigate('CreateAddjustScript');
+    navigation.navigate('Điều kiện');
   };
 
   if (loading) {
@@ -75,7 +130,7 @@ const DeviceToggleAction = () => {
         
         <View className="flex-row items-center p-4 bg-white border-b border-gray-200">
           <TouchableOpacity 
-            onPress={() => navigation.goBack()}
+            onPress={() => navigation.navigate('ActionList')}
             className="p-2 rounded-full mr-4"
             accessibilityLabel="Go back"
           >
@@ -128,8 +183,7 @@ const DeviceToggleAction = () => {
         </View>
       </SafeAreaView>
     );
-  }
-
+  } 
   // Pin state selection screen
   return (
     <SafeAreaView className="flex-1 bg-slate-50">
@@ -144,6 +198,13 @@ const DeviceToggleAction = () => {
           <ArrowLeft size={24} color="#000000" />
         </TouchableOpacity>
         <Text className="text-xl font-semibold">Chọn trạng thái</Text>
+        <TouchableOpacity 
+          onPress={handleSubmit}
+          className="p-2 rounded-full ml-auto"
+          accessibilityLabel="Save action"
+        >
+          <Text className='text-green-500 text-lg font-semibold'>Tiếp theo</Text>
+        </TouchableOpacity>
       </View>
       
       <View className="p-4">
@@ -153,8 +214,8 @@ const DeviceToggleAction = () => {
               <Cpu size={24} color="#3B82F6" />
             </View>
             <View className="ml-4">
-              <Text className="text-lg font-medium">{selectedDevice.name}</Text>
-              <Text className="text-sm text-gray-500">{selectedDevice.type}</Text>
+              <Text className="text-lg font-medium">{selectedDevice?.name}</Text>
+              <Text className="text-sm text-gray-500">{selectedDevice?.type}</Text>
             </View>
           </View>
         </View>
@@ -193,14 +254,14 @@ const DeviceToggleAction = () => {
           </View>
         ))}
         
-        <TouchableOpacity
+        {/* <TouchableOpacity
           onPress={handleSubmit}
           disabled={!isPinStateSelected}
           className={`w-full p-4 rounded-lg mt-6 ${isPinStateSelected ? 'bg-blue-500' : 'bg-blue-300'}`}
           accessibilityLabel="Save device settings"
         >
           <Text className="text-white text-center font-semibold text-lg">Lưu</Text>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
       </View>
     </SafeAreaView>
   );
