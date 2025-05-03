@@ -22,10 +22,10 @@
 // const mqttPort = 1883;
 // const mqttServer = "192.168.36.5";
 
-const apiUrl = "http://139.59.97.249:8080";
-const ipHost = "139.59.97.249";
+const apiUrl = "http://167.71.209.235:8080";
+const ipHost = "167.71.209.235";
 const port = "8080";
 const mqttPort = 1883;
-const mqttServer = "139.59.97.249";
+const mqttServer = "167.71.209.235";
 
 export { apiUrl, ipHost, mqttServer, port, mqttPort };

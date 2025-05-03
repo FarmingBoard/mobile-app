@@ -12,7 +12,7 @@ import { getDevicesOfAsset } from "../api/getDeviceOfAssets";
 const imageGarden = '../../assets/garden.jpg';
 
 const HomePage = () => {
-  const { assets: spaces, loading } = useGetAssets();
+  const { assets: spaces, loading } = useGetAssets("Vườn");
   const [selectedSpaceIndex, setSelectedSpaceIndex] = useState(0);
   const [selectedSpace, setSelectedSpace] = useState(null);
   const navigation = useNavigation();

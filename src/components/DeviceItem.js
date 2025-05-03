@@ -42,7 +42,7 @@ const DeviceItem = ({ device }) => {
         >
           <View className="flex-1 justify-center items-center" style={{backgroundColor: 'rgba(0,0,0,0.5)'}}>
             <View className="w-11/12 bg-white rounded-lg shadow-lg p-4">
-              <HistoryList deviceId={device.id} keys={deviceType.get(device?.device_type)} />
+              <HistoryList deviceId={device.id} keys={deviceType.get(device?.deviceProfileName)} />
               <TouchableOpacity
                 onPress={toggleHistory}
                 className="mt-4 bg-emerald-50 p-3 rounded-lg items-center"
@@ -88,7 +88,7 @@ const DeviceItem = ({ device }) => {
             <View className="flex-row items-center mt-1">
               <View className={`w-2 h-2 rounded-full ${isActive ? 'bg-emerald-500' : 'bg-gray-300'}`} />
               <Text className={`ml-1.5 text-xs ${isActive ? 'text-emerald-600' : 'text-gray-400'}`}>
-                {isActive ? "Đang hoạt động" : "Không hoạt động"} | {deviceType.get(device?.device_type).name}
+                {isActive ? "Đang hoạt động" : "Không hoạt động"} | {device?.deviceProfileName}
               </Text>
             </View>
           </View>
@@ -130,26 +130,26 @@ const DeviceItem = ({ device }) => {
         <View className="border-t border-gray-100 pt-2 pb-4">
           {/* Weather section */}
           {
-              device?.device_type == 'AIR' && (
+              device?.deviceProfileName == 'Không khí' && (
                 <AIR device={device} />
               )
           }
 
           {
-              device?.device_type == 'LIGHT_RAIN' && (
+              device?.deviceProfileName == 'Ánh sáng, lượng mưa' && (
                 <LIGHT_RAIN device={device} />
               )
           }
 
           {
-              device?.device_type == 'SOIL' && (
+              device?.deviceProfileName == 'Độ ẩm đất bơm nước' && (
                 <SOIL_MOISTURE device={device} />
               )
           }
 
           
           {/* LED section */}
-          { device?.device_type != 'RC522_MODULE' && (
+          { device?.deviceProfileName != 'Cửa thẻ từ' && (
             <DeviceSection 
               title="Bóng đèn" 
               icon={<Sun size={18} color="#059669" />}
@@ -159,7 +159,7 @@ const DeviceItem = ({ device }) => {
           )}
 
           {
-              device?.device_type == 'RC522_MODULE' && (
+              device?.deviceProfileName == 'Cửa thẻ từ' && (
                 <RC522_MODULE device={device} />
               )
           }

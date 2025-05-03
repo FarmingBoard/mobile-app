@@ -29,6 +29,19 @@ import ScriptPage from './src/pages/scripts/ScriptPage';
 import SceneCreationScreen from './src/pages/scripts/CreateScript';
 import ScheduleTimeScreen from './src/pages/scripts/ScheduleTime';
 import CreateSceneScreen from './src/pages/scripts/CreateAddjustScript';
+import { ScriptProvider } from './src/contexts/ScriptContext';
+import WeatherOptions from './src/pages/scripts/WeatherOptions';
+import TemperatureScreen from './src/pages/scripts/TemperatureScreen';
+import HumidityScreen from './src/pages/scripts/HumidityScreen';
+import WindScreen from './src/pages/scripts/WindScreen';
+import WeatherScreen from './src/pages/scripts/WeatherScreen';
+import SunScreen from './src/pages/scripts/SunScreen';
+import DeviceTriggerScreen from './src/pages/scripts/deviceTrigger/TriggerDeviceScreen';
+import OptionDeviceState from './src/pages/scripts/deviceTrigger/OptionDeviceState';
+import DeviceParameterScreen from './src/pages/scripts/deviceTrigger/DeviceParameterScreen';
+import NotificationAction from './src/pages/scripts/actionScript/NotificationAction';
+import DeviceToggleAction from './src/pages/scripts/actionScript/DeviceToggleAction';
+import ActionList from './src/pages/scripts/actionScript/ActionList';
 
 // // Your secondary Firebase project credentials...
 // const credentials = {
@@ -145,6 +158,7 @@ const ProfileScreen = () => (
 
 const ScriptScreen = () => {
   return (
+    <ScriptProvider>
     <Stack.Navigator>
       <Stack.Screen 
         name="Kịch bản" 
@@ -157,7 +171,7 @@ const ScriptScreen = () => {
         name="Tạo kịch bản" 
         component={SceneCreationScreen}
         options={{
-          title: 'Tạo kịch bản mới',
+          title: 'Chọn loại',
           headerStyle: {
             backgroundColor: '#fff',
           },
@@ -175,13 +189,98 @@ const ScriptScreen = () => {
         }}
       />
       <Stack.Screen
+        name="Thời tiết"
+        component={WeatherOptions}
+        options={{
+          headerShown: false
+        }}
+      />
+      <Stack.Screen
+        name="Nhiệt độ"
+        component={TemperatureScreen}
+        options={{
+          headerShown: false
+        }}
+      />
+      <Stack.Screen
+        name="Độ ẩm"
+        component={HumidityScreen}
+        options={{
+          headerShown: false
+        }}
+      />
+      <Stack.Screen
+        name="Gió"
+        component={WindScreen}
+        options={{
+          headerShown: false
+        }}
+      />
+      <Stack.Screen
+        name="Trạng thái thời tiết"
+        component={WeatherScreen}
+        options={{
+          headerShown: false
+        }}
+      />
+      <Stack.Screen
+        name="Mặt trời"
+        component={SunScreen}
+        options={{
+          headerShown: false
+        }}
+      />  
+      <Stack.Screen
         name="Điều kiện"
         component={CreateSceneScreen}
         options={{
           headerShown: false
         }}
       />
+      <Stack.Screen
+        name="Trạng thái thiết bị"
+        component={DeviceTriggerScreen}
+        options={{
+          headerShown: false
+        }}
+      />
+      <Stack.Screen
+        name="Chọn trạng thái thiết bị"
+        component={OptionDeviceState}
+        options={{
+          headerShown: false
+        }}
+      />
+      <Stack.Screen
+        name="DeviceParameterScreen"
+        component={DeviceParameterScreen}
+        options={{
+          headerShown: false
+        }}
+      />
+      <Stack.Screen
+        name="ActionList"
+        component={ActionList}
+        options={{
+          headerShown: false
+        }}
+      />
+      <Stack.Screen
+        name="NotificationAction"
+        component={NotificationAction}
+        options={{
+          headerShown: false
+        }}
+      />
+      <Stack.Screen
+        name="DeviceToggleAction"
+        component={DeviceToggleAction}
+        options={{
+          headerShown: false
+        }}
+      />
     </Stack.Navigator>
+    </ScriptProvider>
   )
 }
 

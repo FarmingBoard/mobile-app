@@ -1,4 +1,5 @@
 import React from 'react';
+import { useScript } from '../../contexts/ScriptContext';
 import { View, Text, TouchableOpacity, SafeAreaView, StatusBar, ScrollView } from 'react-native';
 import { ArrowLeft, ChevronRight, Sun, Clock, Zap, Fingerprint } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
@@ -12,7 +13,7 @@ const SceneCreationScreen = () => {
       description: 'Ví dụ: tắt tất cả đèn trong phòng ngủ bằng một lần chạm.',
       icon: (props) => <Fingerprint {...props} />,
       color: '#FF8A65',
-      to: 'Lên lịch',
+      to: 'Điều kiện',
     },
     {
       id: 2,
@@ -20,7 +21,7 @@ const SceneCreationScreen = () => {
       description: 'Ví dụ: khi nhiệt độ lớn hơn 28°C.',
       icon: (props) => <Sun {...props} />,
       color: '#FFB74D',
-      to: 'Lên lịch',
+      to: 'Thời tiết',
     },
     {
       id: 3,
@@ -36,7 +37,7 @@ const SceneCreationScreen = () => {
       description: 'Ví dụ: khi một hoạt động bất thường được phát hiện.',
       icon: (props) => <Zap {...props} />,
       color: '#4DB6AC',
-      to: 'Lên lịch',
+      to: 'Trạng thái thiết bị',
     },
   ];
 

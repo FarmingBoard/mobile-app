@@ -31,7 +31,7 @@ export default function AddAssetScreen() {
     } 
 
     try {
-      const newAsset = await createAsset(assetName);
+      const newAsset = await createAsset(assetName, "Vườn");
       console.log('Asset created:', newAsset);
       navigation.navigate('HomePage');
     } catch (error) {

@@ -38,7 +38,8 @@ export const getDevicesOfAsset =  async (assetId) => {
             id: rp.id.id,
             name: rp.name,
             active: rp.active,
-            device_type: rp.additionalInfo.device_type
+            deviceProfileName: rp.deviceProfileName,
+            deviceProfileId: rp.deviceProfileId
         }   
     }));
 
