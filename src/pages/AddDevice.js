@@ -26,6 +26,8 @@ import useGetAssets from '../hooks/useGetAssets';
 import useCreateDeviceAssetRelation from '../hooks/useCreateDeviceAssetRelation';
 import deviceType from '../types/DeviceType';
 import { setAttributeShareScope } from '../api/setAttributeShareScope';
+import DeviceSetupScreen from './DeviceScanner';
+import { set } from 'date-fns';
 
 // UUID cho dịch vụ tùy
 const SERVICE_UUID = '4fafc201-1fb5-459e-8fcc-c5c9c331914b';
@@ -56,9 +58,10 @@ const AddDeviceScreen = () => {
   const [wifiSSID, setWifiSSID] = useState('');
   const [wifiPassword, setWifiPassword] = useState('');
   const [selectedAsset, setSelectedAsset] = useState(null);
-  const { assets } = useGetAssets(); 
+  const { assets } = useGetAssets("Vườn"); 
   const [selectModalVisible, setSelectModalVisible] = useState(false);
   const { createDeviceAssetRelation } = useCreateDeviceAssetRelation();
+  const [creating, setCreating] = useState(false);
 
   const SelectAssetModal = () => {
     return (
@@ -215,6 +218,7 @@ const AddDeviceScreen = () => {
     }
 
     try {
+
       setDeviceId(device.id);
       console.log('Đang kết nối với thiết bị:', device.name);
       
@@ -245,7 +249,7 @@ const AddDeviceScreen = () => {
       }
 
       setCurrentDevice(device);
-      Alert.alert('Thành công', 'Đã kết nối với thiết bị ' + device.name);
+      Alert.alert('Tìm thấy', 'Đã kết nối với thiết bị ' + device.name);
       setModalVisible(false);
       stopScan();
 
@@ -289,7 +293,64 @@ const AddDeviceScreen = () => {
     }
   };
 
+  const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+
   const handleAddDevice = async () => {
+    setCreating(true);
+
+    let devicesX = []
+
+    if (!bleManager) {
+      Alert.alert('Lỗi', 'Bluetooth chưa sẵn sàng, vui lòng thử lại');
+      return;
+    }
+
+    setDevices([]);
+    setIsScanning(true);
+    setModalVisible(true);
+
+    // Keep track of discovered devices to avoid duplicates
+    const discoveredDevices = new Map();
+
+    bleManager.startDeviceScan(null, null, (error, device) => {
+      if (error) {
+        console.error('Lỗi quét thiết bị:', error);
+        stopScan();
+        Alert.alert('Lỗi', 'Không thể quét thiết bị Bluetooth. Vui lòng thử lại.');
+        return;
+      }
+
+      // Only add devices with a name (to filter out unknown devices)
+      if (device && device.name && !discoveredDevices.has(device.id)) {
+        discoveredDevices.set(device.id, device);
+        devicesX = Array.from(discoveredDevices.values());
+        setDevices(Array.from(discoveredDevices.values()));
+      }
+    });
+
+    setTimeout(() => {
+      stopScan();
+    }
+    , 10000);
+
+
+    // tôi muốn nó dừng thực thi chương trình phía sau 10s
+    await sleep(10000);
+
+    // liet ke cac thiet bi bluetooth
+    console.log('Devices:', devicesX);
+
+    // ket noi den thiet bi bluetooth ten la ESP32_BLE
+    const deviceESP = devicesX.find(device => device.name == 'ESP32_BLE');
+    if (!deviceESP) {
+      Alert.alert('Lỗi', 'Không tìm thấy thiết bị nào');
+    }
+    setCurrentDevice(deviceESP);
+    setDeviceId(deviceESP.id);
+    console.log('Device ID:', deviceESP.id);
+
+    console.log('Connecting to device:', deviceESP);
+    await connectToDevice(deviceESP);
 
     if (!deviceName.trim()) {
       Alert.alert('Lỗi', 'Vui lòng nhập tên thiết bị');
@@ -301,10 +362,10 @@ const AddDeviceScreen = () => {
       return;
     }
 
-    if (!deviceId.trim()) {
-      Alert.alert('Lỗi', 'Vui lòng quét và chọn thiết bị Bluetooth');
-      return;
-    }
+    // if (!deviceId.trim()) {
+    //   Alert.alert('Lỗi', 'Vui lòng quét và chọn thiết bị Bluetooth');
+    //   return;
+    // }
 
     if (!selectedType) {
       Alert.alert('Lỗi', 'Vui lòng chọn loại thiết bị');
@@ -336,9 +397,9 @@ const AddDeviceScreen = () => {
         };
         
         // Gửi cấu hình cho thiết bị
-        if (currentDevice) {
+        if (deviceESP) {
             const success = await sendMessageToDevice(
-                currentDevice,
+                deviceESP,
                 JSON.stringify(configData) + ";"
             );
             console.log('Config sent:', success);
@@ -354,6 +415,8 @@ const AddDeviceScreen = () => {
             }
           }}]
         );
+
+        setCreating(false);
     } catch (error) {
       console.log(error);
       Alert.alert('Lỗi', 'Không thể thêm thiết bị. Vui lòng thử lại.');
@@ -375,6 +438,12 @@ const AddDeviceScreen = () => {
       <Text style={styles.connectButton}>Kết nối</Text>
     </TouchableOpacity>
   );
+
+  if (creating) {
+    return (
+      <DeviceSetupScreen/>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -437,7 +506,7 @@ const AddDeviceScreen = () => {
               />
             </View>
 
-            <View style={styles.inputGroup}>
+            {/* <View style={styles.inputGroup}>
               <Text style={styles.label}>ID thiết bị</Text>
               <View style={styles.idInputContainer}>
                 <TextInput
@@ -454,7 +523,7 @@ const AddDeviceScreen = () => {
                   <Bluetooth size={24} color="#fff" />
                 </TouchableOpacity>
               </View>
-            </View>
+            </View> */}
 
             {/* Selection of Asset */}
             <View style={styles.inputGroup}>

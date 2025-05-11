@@ -66,7 +66,7 @@ export default function LoginRegister() {
                 })
                 .catch(err => {
                     setLoading(false);
-                    setError('Đã xảy ra lỗi, vui lòng thử lại.');
+                    setError('Đã xảy ra lỗi, vui lòng thử lại.' + err);
                     console.log(err);
                 });
         } else {
@@ -93,7 +93,7 @@ export default function LoginRegister() {
                 })
                 .then(async data => {
                     console.log(data);
-                    setLoading(false);
+                    setLoading(false);  
                     if (data.token) {
                         await AsyncStorage.setItem('token', data.token);
                         await AsyncStorage.setItem('refreshToken', data.refreshToken);
@@ -104,7 +104,7 @@ export default function LoginRegister() {
                 })
                 .catch(err => {
                     setLoading(false);
-                    setError('Đã xảy ra lỗi, vui lòng thử lại.');
+                    setError('Đã xảy ra lỗi, vui lòng thử lại.' + err);
                     console.log(err);
                 });
         }

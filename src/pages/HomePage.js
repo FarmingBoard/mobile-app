@@ -1,7 +1,7 @@
 // HomePage.tsx
 import React, { useState, useEffect } from "react";
 import { View, Text, TouchableOpacity, FlatList, Image } from "react-native";
-import { Cpu, ChevronLeft, ChevronRight, Plus, Cloud, Sun, CloudRain, CloudSnow, MapPin } from "lucide-react-native";
+import { Cpu, ChevronLeft, ChevronRight, Plus, Cloud, Sun, CloudRain, CloudSnow, MapPin, Lamp, TreeDeciduous } from "lucide-react-native";
 import useGetAssets from "../hooks/useGetAssets";
 import { useGetDeviceOfAssets } from "../hooks/useGetDeviceOfAssets";
 import CircleSpin from '../components/CircleSpinner';
@@ -80,16 +80,12 @@ const HomePage = () => {
         <View className="px-5 flex-row items-center justify-between">
           {/* Logo and App Title */}
           <View className="flex-row items-center">
-            <Image 
-              source={require('../../assets/logo.jpg')} // Replace with your actual logo path
-              className="w-9 h-9"
-              defaultSource={require('../../assets/logo.jpg')} // Fallback image
-            />
-            <Text className="ml-2 text-lg font-bold text-emerald-700">SmartFarming</Text>
+            <TreeDeciduous size={30} color="#10b981" />
+            <Text className="ml-2 text-lg font-bold text-emerald-700">AgriTraceChain</Text>
           </View>
           
           {/* Weather Information */}
-          <View className="flex-row items-center">
+          {/* <View className="flex-row items-center">
             <View className="w-8 h-8 bg-amber-50 rounded-full items-center justify-center mr-2">
               {getWeatherIcon()}
             </View>
@@ -100,7 +96,7 @@ const HomePage = () => {
                 <Text className="text-xs text-gray-500">{weather.location}</Text>
               </View>
             </View>
-          </View>
+          </View> */}
         </View>
       </View>
       

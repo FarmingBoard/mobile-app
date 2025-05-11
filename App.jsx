@@ -44,6 +44,7 @@ import DeviceToggleAction from './src/pages/scripts/actionScript/DeviceToggleAct
 import ActionList from './src/pages/scripts/actionScript/ActionList';
 import DeviceSelectScreen from './src/pages/scripts/actionScript/DeviceSelectScreen';
 import DevicePinToggleScreen from './src/pages/scripts/actionScript/DevicePinToggleScreen';
+import DeviceScanner from './src/pages/DeviceScanner';
 
 // // Your secondary Firebase project credentials...
 // const credentials = {
@@ -89,6 +90,13 @@ const GardenScreen = () => (
       }}
     />
      <Stack.Screen 
+        name="DeviceScanner" 
+        component={DeviceScanner}
+        options={{
+          headerShown: false
+        }}
+      />
+     <Stack.Screen 
         name="AddDevice" 
         component={AddDeviceScreen}
         options={{
@@ -125,6 +133,13 @@ const ScenarioScreen = () => {
       <Stack.Screen 
         name="Devices" 
         component={DevicePage}
+        options={{
+          headerShown: false
+        }}
+      />
+      <Stack.Screen 
+        name="DeviceScanner" 
+        component={DeviceScanner}
         options={{
           headerShown: false
         }}

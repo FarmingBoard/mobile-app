@@ -159,6 +159,7 @@ const DeviceParameterScreen = () => {
         type: 'DEVICE',
         conditions: [{
           deviceName: device.name,
+          deviceId: device.id.id,
           conditions: [{
             key: parameter.id,
             operator: comparison,

@@ -18,6 +18,7 @@ import useCreateAsset from "../../hooks/useCreateAsset"
 import { TextInput } from "react-native"
 import axios from "axios"
 import { apiUrl} from "../../utils/ApiPath"
+import useCreateDeviceAssetRelation from "../../hooks/useCreateDeviceAssetRelation"
 
 const SwipeableItem = ({ children, onDelete }) => {
   const pan = new Animated.ValueXY()
@@ -87,10 +88,12 @@ const SwipeableItem = ({ children, onDelete }) => {
 const CreateSceneScreen = () => {
   const navigation = useNavigation()
   const { triggers, actions, setTriggers, setActions, lat, lon, setLat, setLon } = useScript()
-  const [conditionType, setConditionType] = useState("any") // "any" or "all"
+  const [conditionType, setConditionType] = useState("OR") // "any" or "all"
 
   const {createAsset, loading, error} = useCreateAsset();
   const [assetName, setAssetName] = useState('');
+
+  const { createDeviceAssetRelation } = useCreateDeviceAssetRelation();
 
   // Helper function to format days
   const formatDays = (days) => {
@@ -180,11 +183,35 @@ const CreateSceneScreen = () => {
           console.log(assetName);
           const asset = await createAsset(assetName, "Cảnh thông minh");
           console.log(asset);
+          // duyet qua tung thiet bi trong action va them lien he
+          for (let i = 0; i < actions.length; i++) {
+            const action = actions[i];
+            if (action.CMD == "SET_OUTPUT") {
+              for (let j = 0; j < action.params.length; j++) {
+                const param = action.params[j];
+                console.log(param);
+                await createDeviceAssetRelation(param.deviceId, asset.id.id);
+              }
+            } 
+          }
+          // duyet qua cac trigger va them lien he
+          for (let i = 0; i < triggers.length; i++) {
+            const trigger = triggers[i];
+            if (trigger.type == "DEVICE") {
+              for (let j = 0; j < trigger.conditions.length; j++) {
+                const condition = trigger.conditions[j];
+                console.log(condition);
+                await createDeviceAssetRelation(condition.deviceId, asset.id.id);
+              }
+            }
+          }
+          console.log(asset);
         
           const token = await AsyncStorage.getItem('token');
           const res = await axios.post(`${apiUrl}/api/plugins/telemetry/ASSET/${asset.id.id}/SERVER_SCOPE`, {
-            triggers,
-            actions,
+            trigger: triggers,
+            action: actions,
+            triggerType: conditionType,
             lat,
             lon,
             active: true
@@ -303,15 +330,15 @@ const CreateSceneScreen = () => {
                   flex: 1,
                   paddingVertical: 8,
                   alignItems: "center",
-                  backgroundColor: conditionType === "any" ? "#FFFFFF" : "transparent",
+                  backgroundColor: conditionType === "OR" ? "#FFFFFF" : "transparent",
                   borderRadius: 6,
                 }}
-                onPress={() => setConditionType("any")}
+                onPress={() => setConditionType("OR")}
               >
                 <Text
                   style={{
-                    color: conditionType === "any" ? "#4CD964" : "#666",
-                    fontWeight: conditionType === "any" ? "600" : "400",
+                    color: conditionType === "OR" ? "#4CD964" : "#666",
+                    fontWeight: conditionType === "OR" ? "600" : "400",
                   }}
                 >
                   Một trong các điều kiện
@@ -322,15 +349,15 @@ const CreateSceneScreen = () => {
                   flex: 1,
                   paddingVertical: 8,
                   alignItems: "center",
-                  backgroundColor: conditionType === "all" ? "#FFFFFF" : "transparent",
+                  backgroundColor: conditionType === "AND" ? "#FFFFFF" : "transparent",
                   borderRadius: 6,
                 }}
-                onPress={() => setConditionType("all")}
+                onPress={() => setConditionType("AND")}
               >
                 <Text
                   style={{
-                    color: conditionType === "all" ? "#4CD964" : "#666",
-                    fontWeight: conditionType === "all" ? "600" : "400",
+                    color: conditionType === "AND" ? "#4CD964" : "#666",
+                    fontWeight: conditionType === "AND" ? "600" : "400",
                   }}
                 >
                   Tất cả điều kiện
